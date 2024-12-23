@@ -1,10 +1,9 @@
 'use server';
 
 import { z } from 'zod';
-
 import { createUser, getUser } from '@/lib/db/queries';
-
 import { signIn } from './auth';
+import dns from 'dns/promises';
 
 const authFormSchema = z.object({
   email: z.string().email(),
@@ -43,12 +42,22 @@ export const login = async (
 
 export interface RegisterActionState {
   status:
-    | 'idle'
-    | 'in_progress'
-    | 'success'
-    | 'failed'
-    | 'user_exists'
-    | 'invalid_data';
+  | 'idle'
+  | 'in_progress'
+  | 'success'
+  | 'failed'
+  | 'user_exists'
+  | 'invalid_data';
+}
+
+async function isDomainValid(email: string): Promise<boolean> {
+  const domain = email.split('@')[1];
+  try {
+    const records = await dns.resolveMx(domain);
+    return records && records.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 export const register = async (
@@ -61,11 +70,22 @@ export const register = async (
       password: formData.get('password'),
     });
 
-    const [user] = await getUser(validatedData.email);
+    // Strict domain validation
+    const emailRegex = /^[^@\s]+@princeton\.com$/;
+    if (!emailRegex.test(validatedData.email)) {
+      return { status: 'invalid_data' };
+    }
 
+    // Perform DNS validation
+    if (!await isDomainValid(validatedData.email)) {
+      return { status: 'invalid_data' };
+    }
+
+    const [user] = await getUser(validatedData.email);
     if (user) {
       return { status: 'user_exists' } as RegisterActionState;
     }
+
     await createUser(validatedData.email, validatedData.password);
     await signIn('credentials', {
       email: validatedData.email,
