@@ -3,58 +3,59 @@ import Form from 'next/form';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
+interface AuthFormProps {
+  action: (formData: FormData) => void;
+  defaultEmail?: string;
+  showOTP?: boolean;
+  children: React.ReactNode;
+}
+
 export function AuthForm({
   action,
+  defaultEmail,
+  showOTP,
   children,
-  defaultEmail = '',
-}: {
-  action: NonNullable<
-    string | ((formData: FormData) => void | Promise<void>) | undefined
-  >;
-  children: React.ReactNode;
-  defaultEmail?: string;
-}) {
+}: AuthFormProps) {
   return (
-    <Form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
-      <div className="flex flex-col gap-2">
-        <Label
-          htmlFor="email"
-          className="text-zinc-600 font-normal dark:text-zinc-400"
-        >
-          Email Address
-        </Label>
-
+    <form action={action} className="flex flex-col space-y-4 px-4 sm:px-16">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           name="email"
-          className="bg-muted text-md md:text-sm"
           type="email"
-          placeholder="user@acme.com"
-          autoComplete="email"
-          required
-          autoFocus
+          placeholder="you@example.com"
           defaultValue={defaultEmail}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label
-          htmlFor="password"
-          className="text-zinc-600 font-normal dark:text-zinc-400"
-        >
-          Password
-        </Label>
-
-        <Input
-          id="password"
-          name="password"
-          className="bg-muted text-md md:text-sm"
-          type="password"
           required
         />
       </div>
-
+      {!showOTP && (
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+      )}
+      {showOTP && (
+        <div className="space-y-2">
+          <Label htmlFor="otp">Verification Code</Label>
+          <Input
+            id="otp"
+            name="otp"
+            type="text"
+            placeholder="123456"
+            required
+            maxLength={6}
+            pattern="\d{6}"
+          />
+        </div>
+      )}
       {children}
-    </Form>
+    </form>
   );
 }

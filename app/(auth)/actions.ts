@@ -1,9 +1,14 @@
 'use server';
 
 import { z } from 'zod';
-import { createUser, getUser } from '@/lib/db/queries';
+import { createUser, getUser, getPendingRegistration, createPendingRegistration } from '@/lib/db/queries';
 import { signIn } from './auth';
 import dns from 'dns/promises';
+import { generateOTP, sendOTPEmail } from '@/lib/auth/otp';
+import { genSaltSync, hashSync } from 'bcrypt-ts';
+
+const OTP_EXPIRATION_MINUTES = 15;
+const OTP_EXPIRATION_MS = OTP_EXPIRATION_MINUTES * 60 * 1000;
 
 const authFormSchema = z.object({
   email: z.string().email(),
@@ -40,15 +45,16 @@ export const login = async (
   }
 };
 
-export interface RegisterActionState {
+export type RegisterActionState = {
   status:
   | 'idle'
-  | 'in_progress'
-  | 'success'
-  | 'failed'
   | 'user_exists'
-  | 'invalid_data';
-}
+  | 'failed'
+  | 'invalid_data'
+  | 'success'
+  | 'otp_sent'
+  | 'invalid_otp';
+};
 
 async function isDomainValid(email: string): Promise<boolean> {
   const domain = email.split('@')[1];
@@ -60,45 +66,68 @@ async function isDomainValid(email: string): Promise<boolean> {
   }
 }
 
-export const register = async (
-  _: RegisterActionState,
+export async function register(
+  prevState: RegisterActionState,
   formData: FormData,
-): Promise<RegisterActionState> => {
+): Promise<RegisterActionState> {
   try {
-    const validatedData = authFormSchema.parse({
-      email: formData.get('email'),
-      password: formData.get('password'),
-    });
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const otp = formData.get('otp') as string;
 
-    // Strict domain validation
-    const emailRegex = /^[^@\s]+@princeton\.com$/;
-    if (!emailRegex.test(validatedData.email)) {
+    // If OTP is provided, we're in verification phase
+    if (otp) {
+      const pendingRegistration = await getPendingRegistration(email);
+
+      if (!pendingRegistration ||
+        pendingRegistration.otp !== otp ||
+        pendingRegistration.expiresAt < new Date()) {
+        return { status: 'invalid_otp' };
+      }
+
+      try {
+        // First create the user
+        await createUser(email, pendingRegistration.password, true);
+
+        // Redirect to login page instead of trying to auto-sign-in
+        return { status: 'success' };
+      } catch (error) {
+        console.error('Failed to create user:', error);
+        return { status: 'failed' };
+      }
+    }
+
+    // Initial registration attempt
+    const validationResult = authFormSchema.safeParse({ email, password });
+    if (!validationResult.success) {
       return { status: 'invalid_data' };
     }
 
-    // Perform DNS validation
-    if (!await isDomainValid(validatedData.email)) {
-      return { status: 'invalid_data' };
+    const existingUser = await getUser(email);
+    if (existingUser.length > 0) {
+      return { status: 'user_exists' };
     }
 
-    const [user] = await getUser(validatedData.email);
-    if (user) {
-      return { status: 'user_exists' } as RegisterActionState;
-    }
+    // Hash password before saving to pending registrations
+    const salt = genSaltSync(10);
+    const hashedPassword = hashSync(password, salt);
 
-    await createUser(validatedData.email, validatedData.password);
-    await signIn('credentials', {
-      email: validatedData.email,
-      password: validatedData.password,
-      redirect: false,
+    // Generate and send OTP
+    const generatedOTP = generateOTP();
+    const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MS);
+
+    // Save the pending registration with hashed password
+    await createPendingRegistration({
+      email,
+      password: hashedPassword,  // Save the hashed password
+      otp: generatedOTP,
+      expiresAt,
     });
 
-    return { status: 'success' };
+    await sendOTPEmail(email, generatedOTP);
+    return { status: 'otp_sent' };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { status: 'invalid_data' };
-    }
-
+    console.error('Registration error:', error);
     return { status: 'failed' };
   }
-};
+}

@@ -15,6 +15,8 @@ import {
   type Message,
   message,
   vote,
+  pendingRegistrations,
+  type PendingRegistrations,
 } from './schema';
 import { BlockKind } from '@/components/block';
 
@@ -35,12 +37,11 @@ export async function getUser(email: string): Promise<Array<User>> {
   }
 }
 
-export async function createUser(email: string, password: string) {
-  const salt = genSaltSync(10);
-  const hash = hashSync(password, salt);
+export async function createUser(email: string, password: string, isHashed: boolean = false) {
+  const finalPassword = isHashed ? password : hashSync(password, genSaltSync(10));
 
   try {
-    return await db.insert(user).values({ email, password: hash });
+    return await db.insert(user).values({ email, password: finalPassword });
   } catch (error) {
     console.error('Failed to create user in database');
     throw error;
@@ -325,6 +326,40 @@ export async function updateChatVisiblityById({
     return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
   } catch (error) {
     console.error('Failed to update chat visibility in database');
+    throw error;
+  }
+}
+
+export async function getPendingRegistration(email: string): Promise<PendingRegistrations | undefined> {
+  const result = await db
+    .select()
+    .from(pendingRegistrations)
+    .where(eq(pendingRegistrations.email, email))
+    .limit(1);
+
+  return result[0];
+}
+
+export async function createPendingRegistration({
+  email,
+  password,
+  otp,
+  expiresAt,
+}: {
+  email: string;
+  password: string;
+  otp: string;
+  expiresAt: Date;
+}) {
+  try {
+    return await db.insert(pendingRegistrations).values({
+      email,
+      password,
+      otp,
+      expiresAt,
+    });
+  } catch (error) {
+    console.error('Failed to create pending registration in database');
     throw error;
   }
 }

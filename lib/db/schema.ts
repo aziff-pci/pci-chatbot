@@ -9,6 +9,7 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  serial,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -113,3 +114,14 @@ export const suggestion = pgTable(
 );
 
 export type Suggestion = InferSelectModel<typeof suggestion>;
+
+export const pendingRegistrations = pgTable('PendingRegistrations', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull(),
+  password: text('password').notNull(),
+  otp: text('otp').notNull(),
+  expiresAt: timestamp('expiresAt', { withTimezone: true }).notNull(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow()
+});
+
+export type PendingRegistrations = InferSelectModel<typeof pendingRegistrations>;
