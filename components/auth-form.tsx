@@ -1,4 +1,4 @@
-import Form from 'next/form';
+
 
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -24,9 +24,10 @@ export function AuthForm({
           id="email"
           name="email"
           type="email"
-          placeholder="you@example.com"
+          placeholder="you@princeton.com"
           defaultValue={defaultEmail}
           required
+          disabled={showOTP}
         />
       </div>
       {!showOTP && (

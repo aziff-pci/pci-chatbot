@@ -18,7 +18,7 @@ import {
   pendingRegistrations,
   type PendingRegistrations,
 } from './schema';
-import { BlockKind } from '@/components/block';
+import type { BlockKind } from '@/components/block';
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
@@ -37,7 +37,7 @@ export async function getUser(email: string): Promise<Array<User>> {
   }
 }
 
-export async function createUser(email: string, password: string, isHashed: boolean = false) {
+export async function createUser(email: string, password: string, isHashed = false) {
   const finalPassword = isHashed ? password : hashSync(password, genSaltSync(10));
 
   try {
@@ -331,12 +331,14 @@ export async function updateChatVisiblityById({
 }
 
 export async function getPendingRegistration(email: string): Promise<PendingRegistrations | undefined> {
+  console.log('Getting pending registration for', email);
   const result = await db
     .select()
     .from(pendingRegistrations)
     .where(eq(pendingRegistrations.email, email))
+    .orderBy(desc(pendingRegistrations.createdAt))
     .limit(1);
-
+  console.log(result);
   return result[0];
 }
 

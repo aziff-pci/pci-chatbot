@@ -29,8 +29,10 @@ export default function Page() {
       toast.error('Account already exists');
     } else if (state.status === 'failed') {
       toast.error('Failed to create account');
+    } else if (state.status === 'invalid_email_domain') {
+      toast.error('Please use a @princeton.com email address');
     } else if (state.status === 'invalid_data') {
-      toast.error('Failed validating your submission!');
+      toast.error('Please check your email and password format');
     } else if (state.status === 'otp_sent') {
       toast.success('Verification code sent to your email');
       setShowOTP(true);
@@ -44,19 +46,28 @@ export default function Page() {
   }, [state, router]);
 
   const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get('email') as string);
-    formAction(formData);
+    if (!showOTP) {
+      // Initial registration - store email and submit form as is
+      setEmail(formData.get('email') as string);
+      formAction(formData);
+    } else {
+      // OTP verification - create new FormData with stored email
+      const enrichedFormData = new FormData();
+      enrichedFormData.append('email', email);
+      enrichedFormData.append('otp', formData.get('otp') as string);
+      formAction(enrichedFormData);
+    }
   };
 
   return (
     <div className="flex h-dvh w-screen items-start pt-12 md:pt-0 md:items-center justify-center bg-background">
       <div className="w-full max-w-md overflow-hidden rounded-2xl gap-12 flex flex-col">
         <div className="flex flex-col items-center justify-center gap-2 px-4 text-center sm:px-16">
-          <h3 className="text-xl font-semibold dark:text-zinc-50">Sign Up</h3>
+          <h3 className="text-xl font-semibold dark:text-zinc-50">Create a PCIChat Account</h3>
           <p className="text-sm text-gray-500 dark:text-zinc-400">
             {showOTP
               ? 'Enter the verification code sent to your email'
-              : 'Create an account with your email and password'}
+              : 'Use your @princeton.com email.'}
           </p>
         </div>
         <AuthForm action={handleSubmit} defaultEmail={email} showOTP={showOTP}>

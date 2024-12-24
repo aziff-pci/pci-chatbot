@@ -3,7 +3,6 @@
 import { z } from 'zod';
 import { createUser, getUser, getPendingRegistration, createPendingRegistration } from '@/lib/db/queries';
 import { signIn } from './auth';
-import dns from 'dns/promises';
 import { generateOTP, sendOTPEmail } from '@/lib/auth/otp';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
 
@@ -11,12 +10,17 @@ const OTP_EXPIRATION_MINUTES = 15;
 const OTP_EXPIRATION_MS = OTP_EXPIRATION_MINUTES * 60 * 1000;
 
 const authFormSchema = z.object({
-  email: z.string().email(),
+  email: z.string()
+    .email('Invalid email address')
+    .refine(
+      (email) => email.endsWith('@princeton.com'),
+      { message: 'Email must be a @princeton.com address' }
+    ),
   password: z.string().min(6),
 });
 
 export interface LoginActionState {
-  status: 'idle' | 'in_progress' | 'success' | 'failed' | 'invalid_data';
+  status: 'idle' | 'in_progress' | 'success' | 'failed' | 'invalid_data' | 'invalid_email_domain';
 }
 
 export const login = async (
@@ -24,23 +28,27 @@ export const login = async (
   formData: FormData,
 ): Promise<LoginActionState> => {
   try {
-    const validatedData = authFormSchema.parse({
+    const validatedData = authFormSchema.safeParse({
       email: formData.get('email'),
       password: formData.get('password'),
     });
 
+    if (!validatedData.success) {
+      const emailError = validatedData.error.errors.find(err => err.path[0] === 'email');
+      if (emailError?.message === 'Email must be a @princeton.com address') {
+        return { status: 'invalid_email_domain' };
+      }
+      return { status: 'invalid_data' };
+    }
+
     await signIn('credentials', {
-      email: validatedData.email,
-      password: validatedData.password,
+      email: validatedData.data.email,
+      password: validatedData.data.password,
       redirect: false,
     });
 
     return { status: 'success' };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { status: 'invalid_data' };
-    }
-
     return { status: 'failed' };
   }
 };
@@ -51,20 +59,11 @@ export type RegisterActionState = {
   | 'user_exists'
   | 'failed'
   | 'invalid_data'
+  | 'invalid_email_domain'
   | 'success'
   | 'otp_sent'
   | 'invalid_otp';
 };
-
-async function isDomainValid(email: string): Promise<boolean> {
-  const domain = email.split('@')[1];
-  try {
-    const records = await dns.resolveMx(domain);
-    return records && records.length > 0;
-  } catch {
-    return false;
-  }
-}
 
 export async function register(
   prevState: RegisterActionState,
@@ -86,10 +85,8 @@ export async function register(
       }
 
       try {
-        // First create the user
+        // Create the user with the hashed password from pending registration
         await createUser(email, pendingRegistration.password, true);
-
-        // Redirect to login page instead of trying to auto-sign-in
         return { status: 'success' };
       } catch (error) {
         console.error('Failed to create user:', error);
@@ -97,29 +94,32 @@ export async function register(
       }
     }
 
-    // Initial registration attempt
+    // Initial registration attempt - validate email format and domain
     const validationResult = authFormSchema.safeParse({ email, password });
     if (!validationResult.success) {
+      const emailError = validationResult.error.errors.find(err => err.path[0] === 'email');
+      if (emailError?.message === 'Email must be a @princeton.com address') {
+        return { status: 'invalid_email_domain' };
+      }
       return { status: 'invalid_data' };
     }
 
+    // Check if user already exists
     const existingUser = await getUser(email);
     if (existingUser.length > 0) {
       return { status: 'user_exists' };
     }
 
-    // Hash password before saving to pending registrations
+    // All validations passed, now proceed with OTP
     const salt = genSaltSync(10);
     const hashedPassword = hashSync(password, salt);
-
-    // Generate and send OTP
     const generatedOTP = generateOTP();
     const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MS);
 
-    // Save the pending registration with hashed password
+    // Save the pending registration
     await createPendingRegistration({
       email,
-      password: hashedPassword,  // Save the hashed password
+      password: hashedPassword,
       otp: generatedOTP,
       expiresAt,
     });

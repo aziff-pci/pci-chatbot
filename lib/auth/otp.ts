@@ -11,9 +11,9 @@ export async function sendOTPEmail(email: string, otp: string) {
     await resend.emails.send({
         from: 'noreply@pcichat.com',
         to: email,
-        subject: 'Your verification code',
+        subject: 'Your PCIChat verification code',
         html: `
-      <h1>Verification Code</h1>
+      <h1>PCIChat</h1>
       <p>Your verification code is: <strong>${otp}</strong></p>
       <p>This code will expire in 15 minutes.</p>
     `,
