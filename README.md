@@ -17,6 +17,13 @@
 
 ## Features
 
+- Chat with advanced language models (GPT-4o and GPT-4o-mini)
+- Upload and analyze images & documents using multimodal capabilities
+- Persistent chat history across sessions
+- Secure authentication using your Princeton Consultants credentials
+
+## Tech Stack
+
 - [Next.js](https://nextjs.org) App Router
   - Advanced routing for seamless navigation and performance
   - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance
@@ -35,11 +42,11 @@
 
 ## Model Providers
 
-This template ships with OpenAI `gpt-4o` as the default. However, with the [AI SDK](https://sdk.vercel.ai/docs), you can switch LLM providers to [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://sdk.vercel.ai/providers/ai-sdk-providers) with just a few lines of code.
+PCIChat currently uses OpenAI's `gpt-4o` and `gpt-4o-mini` models. Thanks to the [AI SDK](https://sdk.vercel.ai/docs), we can easily switch or add other LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://sdk.vercel.ai/providers/ai-sdk-providers) as needed.
 
 ## Deploy Your Own
 
-You can deploy your own version of the Next.js AI Chatbot to Vercel with one click:
+You can deploy your own version of the Next.js AI Chatbot template to Vercel with one click:
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fai-chatbot&env=AUTH_SECRET,OPENAI_API_KEY&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Fvercel%2Fai-chatbot%2Fblob%2Fmain%2F.env.example&demo-title=AI%20Chatbot&demo-description=An%20Open-Source%20AI%20Chatbot%20Template%20Built%20With%20Next.js%20and%20the%20AI%20SDK%20by%20Vercel.&demo-url=https%3A%2F%2Fchat.vercel.ai&stores=[{%22type%22:%22postgres%22},{%22type%22:%22blob%22}])
 
@@ -49,7 +56,7 @@ This project uses pnpm as its package manager and Vercel Environment Variables f
 
 ### Installing pnpm
 
-This project uses pnpm instead of npm because it's significantly faster and more efficient with disk space. pnpm uses a content-addressable store for all packages, meaning each unique version of a package is stored only once on your disk.
+This project uses pnpm instead of npm because it's faster and more efficient with disk space. pnpm uses a content-addressable store for all packages, meaning each unique version of a package is stored only once on your disk.
 
 1. Install pnpm globally:
 ```bash
