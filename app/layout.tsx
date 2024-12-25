@@ -55,6 +55,7 @@ export default async function RootLayout({
             __html: THEME_COLOR_SCRIPT,
           }}
         />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="antialiased">
         <ThemeProvider

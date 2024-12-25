@@ -1,10 +1,10 @@
-<a href="https://chat.vercel.ai/">
-  <img alt="Next.js 14 and App Router-ready AI chatbot." src="app/(chat)/opengraph-image.png">
-  <h1 align="center">Next.js AI Chatbot</h1>
+<a href="https://princeton.com">
+  <img alt="Princeton Consultants Internal Chatbot" src="app/(chat)/pci-logo-wide.png">
+  <h1 align="center">PCIChat</h1>
 </a>
 
 <p align="center">
-  An Open-Source AI Chatbot Template Built With Next.js and the AI SDK by Vercel.
+  Princeton Consultants' Internal Chatbot - A fully customizable private & secure LLM chatbot based on a <a href="https://github.com/vercel/ai-chatbot">template by Vercel</a>.
 </p>
 
 <p align="center">
@@ -45,17 +45,48 @@ You can deploy your own version of the Next.js AI Chatbot to Vercel with one cli
 
 ## Running locally
 
-You will need to use the environment variables [defined in `.env.example`](.env.example) to run Next.js AI Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
+This project uses pnpm as its package manager and Vercel Environment Variables for configuration. 
 
-> Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various OpenAI and authentication provider accounts.
+### Installing pnpm
 
-1. Install Vercel CLI: `npm i -g vercel`
-2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
-3. Download your environment variables: `vercel env pull`
+This project uses pnpm instead of npm because it's significantly faster and more efficient with disk space. pnpm uses a content-addressable store for all packages, meaning each unique version of a package is stored only once on your disk.
+
+1. Install pnpm globally:
+```bash
+npm install -g pnpm
+```
+
+You can verify the installation with:
+```bash
+pnpm --version
+```
+
+### Setting up environment variables
+
+1. Install Vercel CLI:
+```bash
+pnpm install -g vercel
+```
+
+2. Link your local instance to our Vercel project:
+```bash
+vercel link
+```
+
+3. Pull the environment variables:
+```bash
+vercel env pull
+```
+
+This will automatically create a `.env.local` file with all the necessary environment variables from our Vercel project. The file is automatically added to `.gitignore` to ensure sensitive information isn't committed to the repository.
+
+### Starting the development server
+
+Once you have pnpm installed and your environment variables set up, you can start the development server:
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Your app template should now be running on [localhost:3000](http://localhost:3000/).
+The app should now be running on [localhost:3000](http://localhost:3000/).
