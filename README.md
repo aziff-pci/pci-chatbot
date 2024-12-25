@@ -42,7 +42,7 @@
 
 ## Model Providers
 
-PCIChat currently uses OpenAI's `gpt-4o` and `gpt-4o-mini` models. Thanks to the [AI SDK](https://sdk.vercel.ai/docs), we can easily switch or add other LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://sdk.vercel.ai/providers/ai-sdk-providers) as needed.
+PCIChat currently uses OpenAI's `gpt-4o` and `gpt-4o-mini` models. Using the [AI SDK](https://sdk.vercel.ai/docs), we can easily switch or add other LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://sdk.vercel.ai/providers/ai-sdk-providers) as needed.
 
 ## Deploy Your Own
 
