@@ -7,7 +7,6 @@ import type {
 } from 'ai';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { nanoid } from 'nanoid';
 
 import type { Message as DBMessage, Document } from '@/lib/db/schema';
 
@@ -45,7 +44,7 @@ export function getLocalStorage(key: string) {
 }
 
 export function generateUUID(): string {
-  return nanoid();
+  return crypto.randomUUID();
 }
 
 function addToolMessageToChat({
